@@ -1,100 +1,80 @@
-#!/usr/bin/env python3
-"""
-Beanie Size Grader
-Automates size grading for knit beanies/hats with Excel output.
-
-Author: YOUR NAME
-"""
-
-import os
 import argparse
-import pandas as pd
-from openpyxl.styles import Font, PatternFill
-
-# Default base specs and grading offsets
-DEFAULT_BASE_SPECS = {
-    'Crown Circumference (cm)': 56,
-    'Height / Length (cm)': 22,
-    'Brim Width (cm)': 8,
-    'Gauge (stitches per 10cm)': 22
-}
-
-SIZES = ['XS', 'S', 'M', 'L', 'XL']
-GRADE_OFFSETS = {
-    'Crown Circumference (cm)': [-8, -4, 0, 4, 8],
-    'Height / Length (cm)': [-2, -1, 0, 1, 2],
-    'Brim Width (cm)': [0, 0, 0, 0.5, 1],
-    'Gauge (stitches per 10cm)': [0, 0, 0, 0, 0]
-}
-
+from beanie_grader.beanie_config import PRODUCT_CONFIG
+from beanie_grader.config import load_config
+from beanie_grader.commands import run_command, validate_command, list_command
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Knit Beanie Size Grader")
-    parser.add_argument("--base_circumference", type=float, default=DEFAULT_BASE_SPECS['Crown Circumference (cm)'])
-    parser.add_argument("--base_height", type=float, default=DEFAULT_BASE_SPECS['Height / Length (cm)'])
-    parser.add_argument("--base_brim", type=float, default=DEFAULT_BASE_SPECS['Brim Width (cm)'])
-    parser.add_argument("--base_gauge", type=int, default=DEFAULT_BASE_SPECS['Gauge (stitches per 10cm)'])
-    parser.add_argument("--output", type=str, default="knit_beanie_graded_specs.xlsx")
+    parser = argparse.ArgumentParser(
+        description="Config-driven product sizing and grading automation"
+    )
+
+    subparsers = parser.add_subparsers(dest="command", required=True)
+
+    # RUN command
+    run_parser = subparsers.add_parser(
+        "run",
+        help="Run grading pipeline using a product config"
+    )
+
+    run_parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Path to product config YAML"
+    )
+
+    run_parser.add_argument(
+        "--output",
+        type=str,
+        default="graded_output.xlsx",
+        help="Output Excel file"
+    )
+
+    # VALIDATE command
+    validate_parser = subparsers.add_parser(
+        "validate",
+        help="Validate a product config YAML"
+    )
+
+    validate_parser.add_argument(
+        "--config",
+        type=str,
+        required=True,
+        help="Path to product config YAML"
+    )
+
+    # LIST command
+    list_parser = subparsers.add_parser(
+        "list",
+        help="List available config files"
+    )
+
+    # Parse known args first to get --config for run/validate, then load config for run
+    args, remaining = parser.parse_known_args()
+    if args.command == "run":
+        config = load_config(args.config)
+        # Dynamically add --base_* arguments based on loaded config's measurements
+        for name, spec in config["measurements"].items():
+            arg_name = name.lower().replace(" ", "_").replace("/", "").replace("(", "").replace(")", "")
+            run_parser.add_argument(
+                f"--base_{arg_name}",
+                type=float,
+                default=spec["base"],
+                help=f"Override base value for {name}"
+            )
+
+    # Re-parse all args now that dynamic ones are added (for run)
     return parser.parse_args()
-
-
-def build_graded_table(base_specs):
-    df = pd.DataFrame({'Size': SIZES})
-    for measurement, offsets in GRADE_OFFSETS.items():
-        df[measurement] = [round(base_specs[measurement] + offset, 1) for offset in offsets]
-
-    df['Est. Yarn Length (m) approx'] = (
-        (df['Crown Circumference (cm)'] / 100 * 3.14 * df['Height / Length (cm)'] * 1.2 + 10) * 0.8 / 10
-    ).round(1)
-
-    df['Notes'] = ''
-    df.loc[df['Crown Circumference (cm)'] < 50, 'Notes'] = 'Potentially too small'
-    df.loc[df['Crown Circumference (cm)'] > 64, 'Notes'] = 'Potentially too large'
-
-    return df
-
-
-def write_to_excel(df, output_file):
-    output_path = os.path.abspath(output_file)
-    with pd.ExcelWriter(output_path, engine='openpyxl') as writer:
-        df.to_excel(writer, sheet_name='Beanie Specs', index=False)
-        ws = writer.sheets['Beanie Specs']
-
-        for cell in ws[1]:
-            cell.font = Font(bold=True)
-
-        red_fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
-        yellow_fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
-
-        notes_col = df.columns.get_loc('Notes') + 1
-        for row in ws.iter_rows(min_row=2, max_row=ws.max_row, min_col=notes_col, max_col=notes_col):
-            for cell in row:
-                if cell.value == 'Potentially too small':
-                    cell.fill = red_fill
-                elif cell.value == 'Potentially too large':
-                    cell.fill = yellow_fill
-
-        for col in ws.columns:
-            max_length = max((len(str(cell.value)) for cell in col if cell.value), default=0)
-            ws.column_dimensions[col[0].column_letter].width = max_length + 3
-
-    print(f"\nExcel file created: {output_path}")
-
 
 def main():
     args = parse_args()
-    base_specs = {
-        'Crown Circumference (cm)': args.base_circumference,
-        'Height / Length (cm)': args.base_height,
-        'Brim Width (cm)': args.base_brim,
-        'Gauge (stitches per 10cm)': args.base_gauge
-    }
 
-    df = build_graded_table(base_specs)
-    print("\nGenerated Graded Size Specs:")
-    print(df)
-    write_to_excel(df, args.output)
-
+    if args.command == "run":
+        run_command(args)
+    elif args.command == "validate":
+        validate_command(args)
+    elif args.command == "list":
+        list_command(args)
 
 if __name__ == "__main__":
     main()

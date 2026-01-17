@@ -1,0 +1,27 @@
+product:
+  name: shirt
+
+sizes:
+  - XS
+  - S
+  - M
+  - L
+  - XL
+  - XXL
+
+measurements:
+  Chest (cm):
+    base: 88
+    offsets: [-6, -3, 0, 3, 6, 9]
+
+  Length (cm):
+    base: 68
+    offsets: [-2, -1, 0, 1, 2, 3]
+
+  Shoulder Width (cm):
+    base: 40
+    offsets: [-1, -0.5, 0, 0.5, 1, 1.5]
+
+  Sleeve Length (cm):
+    base: 62
+    offsets: [-2, -1, 0, 1, 2, 3]

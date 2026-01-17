@@ -1,0 +1,2 @@
+[console_scripts]
+beanie-grader = beanie_grader.beanie_grader:main

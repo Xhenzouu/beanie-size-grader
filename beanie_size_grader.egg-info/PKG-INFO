@@ -1,0 +1,18 @@
+Metadata-Version: 2.4
+Name: beanie_size_grader
+Version: 0.1.0
+Summary: Automates size grading for knit beanies/hats
+Home-page: https://github.com/Xhenzouu/beanie-size-grader
+Author: YOUR NAME
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.8
+Requires-Dist: pandas>=2.0.0
+Requires-Dist: openpyxl>=3.0.0
+Dynamic: author
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
