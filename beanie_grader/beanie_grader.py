@@ -10,7 +10,6 @@ def parse_args():
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # RUN command
     run_parser = subparsers.add_parser(
         "run",
         help="Run grading pipeline using a product config"
@@ -30,7 +29,6 @@ def parse_args():
         help="Output Excel file"
     )
 
-    # VALIDATE command
     validate_parser = subparsers.add_parser(
         "validate",
         help="Validate a product config YAML"
@@ -43,17 +41,14 @@ def parse_args():
         help="Path to product config YAML"
     )
 
-    # LIST command
     list_parser = subparsers.add_parser(
         "list",
         help="List available config files"
     )
 
-    # Parse known args first to get --config for run/validate, then load config for run
     args, remaining = parser.parse_known_args()
     if args.command == "run":
         config = load_config(args.config)
-        # Dynamically add --base_* arguments based on loaded config's measurements
         for name, spec in config["measurements"].items():
             arg_name = name.lower().replace(" ", "_").replace("/", "").replace("(", "").replace(")", "")
             run_parser.add_argument(
@@ -63,7 +58,6 @@ def parse_args():
                 help=f"Override base value for {name}"
             )
 
-    # Re-parse all args now that dynamic ones are added (for run)
     return parser.parse_args()
 
 def main():

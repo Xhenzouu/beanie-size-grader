@@ -9,7 +9,6 @@ def run_command(args):
     """Handle the 'run' command: load config, build table, and export to Excel."""
     config = load_config(args.config)
     
-    # Collect base overrides from dynamically added args
     base_overrides = {}
     for name in config["measurements"]:
         arg_name = name.lower().replace(" ", "_").replace("/", "").replace("(", "").replace(")", "")
@@ -52,7 +51,6 @@ def write_to_excel(df, output_file):
         for cell in ws[1]:
             cell.font = Font(bold=True)
 
-        # Apply color coding only for beanie notes (if Notes column exists)
         if 'Notes' in df.columns:
             red_fill = PatternFill(start_color='FFC7CE', end_color='FFC7CE', fill_type='solid')
             yellow_fill = PatternFill(start_color='FFEB9C', end_color='FFEB9C', fill_type='solid')
@@ -86,7 +84,6 @@ def build_graded_table(config, base_overrides=None):
         offsets = spec["offsets"]
         df[measurement] = [round(base_value + offset, 1) for offset in offsets]
     
-    # Add beanie-specific calculations only if the product is a beanie
     if config.get("name") == "beanie":
         if 'Crown Circumference (cm)' in df.columns and 'Height / Length (cm)' in df.columns:
             df['Est. Yarn Length (m) approx'] = (
