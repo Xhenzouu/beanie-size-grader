@@ -1,4 +1,4 @@
-# Knit Size Grading Automation Tool 🧶👕
+# Apparel Size Grader Automation Tool 🧶👕
 
 A Python tool that automates **realistic size grading** for knit beanies, hats, and other apparel,  
 with **config-driven measurements**, estimated material usage, and clean, professionally formatted Excel output.
